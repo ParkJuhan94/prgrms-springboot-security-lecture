@@ -1,4 +1,4 @@
-## [KDT] Spring Boot 파트 5 — Spring Security("https://github.com/prgrms-be-devcourse/springboot-security-lecture/tree/class_1#kdt-spring-boot-%ED%8C%8C%ED%8A%B8-5--spring-security")
+## [[KDT] Spring Boot 파트 5 — Spring Security]("https://github.com/prgrms-be-devcourse/springboot-security-lecture/tree/class_1#kdt-spring-boot-%ED%8C%8C%ED%8A%B8-5--spring-security")
 Spring Boot 파트 5에서는 Spring Security에 대해 집중적으로 다룹니다.
 
 총 2챕터로 이루져 있습니다.
