@@ -1,6 +1,8 @@
 spring:
   application:
     name: spring security 01
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   thymeleaf:
     cache: true
   security:
@@ -13,4 +15,12 @@ spring:
     encoding: UTF-8
     cache-duration: PT1H
 server:
-  port: 8080
+  port: 443
+  ssl:
+    enabled: true
+    key-alias: prgrms_keystore
+    key-store: classpath:prgrms_keystore.p12
+    key-store-password: prgrms123
+    key-password: prgrms123
+    trust-store: classpath:prgrms_truststore.p12
+    trust-store-password: prgrms123
