@@ -1,16 +1,23 @@
 package com.prgrms.devcourse.configures;
 
+import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.access.AccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
     private PrgrmsUserDetailsService prgrmsUserDetailsService;
 
@@ -20,7 +27,7 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
         auth.inMemoryAuthentication()
             .withUser("user").password("{noop}user123").roles("USER")
             .and()
-            .withUser("admin").password("{noop}adnmin123").roles("ADMIN");
+            .withUser("admin").password("{noop}admin123").roles("ADMIN");
     }
 
     @Override
@@ -34,6 +41,7 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
         http
             .authorizeRequests()    // authorizeRequests():HTTP 요청에 대한 보안을 구성하기 시작합니다.
                 .antMatchers("/me").hasAnyRole("USER", "ADMIN")
+                .antMatchers("/admin").access("hasRole('ADMIN') and isFullyAuthenticated()")
                 .anyRequest().permitAll() // .anyRequest().permitAll():위에서 정의되지 않은 모든 요청은 누구나 접근할 수 있도록 허용
                 .and()
             .formLogin() // formLogin():폼 기반 로그인을 활성화
@@ -51,7 +59,30 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
                 .logoutSuccessUrl("/") // Redirect to "/" after logout
                 .permitAll()
                 .and()
+            /*
+             * HTTP 요청을 HTTPS 요청으로 리다이렉트
+             */
+            .requiresChannel()
+                .anyRequest().requiresSecure()
+                .and()
+            .exceptionHandling()
+                .accessDeniedHandler(accessDeniedHandler())
+
         ;
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, e) -> {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Object principal = authentication != null ? authentication.getPrincipal() : null;
+            log.warn("{} is denied", principal, e);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("text/plain");
+            response.getWriter().write("## ACCESS DENIED ##");
+            response.getWriter().flush();
+            response.getWriter().close();
+        };
     }
 
 }
