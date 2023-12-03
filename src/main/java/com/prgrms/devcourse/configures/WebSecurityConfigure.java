@@ -15,7 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)    // 현재 실행되는 Security Fiter들을 확인할 수 있다.
 @RequiredArgsConstructor
 @Slf4j
 public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
@@ -32,21 +32,21 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) {
-        // 특정 경로 패턴에 대한 Spring Security 보안 필터 체인을 적용하지 않도록 구성합니다.
+        // 특정 경로 패턴에 대한 Spring Security 보안 필터 체인을 적용하지 않도록 구성
         web.ignoring().antMatchers("/assets/**");
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .authorizeRequests()    // authorizeRequests():HTTP 요청에 대한 보안을 구성하기 시작합니다.
+            .authorizeRequests()    // HTTP 요청에 대한 보안을 구성
                 .antMatchers("/me").hasAnyRole("USER", "ADMIN")
                 .antMatchers("/admin").access("hasRole('ADMIN') and isFullyAuthenticated()")
-                .anyRequest().permitAll() // .anyRequest().permitAll():위에서 정의되지 않은 모든 요청은 누구나 접근할 수 있도록 허용
+                .anyRequest().permitAll() // 위에서 정의되지 않은 모든 요청은 누구나 접근할 수 있도록 허용
                 .and()
-            .formLogin() // formLogin():폼 기반 로그인을 활성화
-                .defaultSuccessUrl("/") // .defaultSuccessUrl("/"):로그인 성공 시 리디렉션되는 기본 URL을 "/" 로 설정
-                .permitAll() // .permitAll():모든 사용자가 로그인 페이지에 접근할 수 있도록 설정
+            .formLogin() // 폼 기반 로그인을 활성화
+                .defaultSuccessUrl("/") // 로그인 성공 시 리디렉션되는 기본 URL을 "/" 로 설정
+                .permitAll() // 모든 사용자가 로그인 페이지에 접근할 수 있도록 설정
                 .and()
             .rememberMe()
                 .rememberMeParameter("remember") // default: remember-me, checkbox 등의 이름과 맞춰야 함
@@ -56,7 +56,7 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
                 .and()
             .logout()
                 .logoutUrl("/logout") // Set custom logout URL
-                .logoutSuccessUrl("/") // Redirect to "/" after logout
+                .logoutSuccessUrl("/")
                 .permitAll()
                 .and()
             /*
