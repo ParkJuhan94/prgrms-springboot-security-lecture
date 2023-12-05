@@ -3,6 +3,7 @@ package com.prgrms.devcourse.configures;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +21,10 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.jdbc.JdbcDaoImpl;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
@@ -30,6 +35,11 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
+    private final DataSource dataSource;
+
+    public WebSecurityConfigure(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     @Override
     public void configure(WebSecurity web) {
@@ -39,12 +49,28 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-            .withUser("user").password("{noop}user123").roles("USER")
-            .and()
-            .withUser("admin01").password("{noop}admin123").roles("ADMIN")
-            .and()
-            .withUser("admin02").password("{noop}admin123").roles("ADMIN");
+        auth.jdbcAuthentication()
+            .dataSource(dataSource)
+            .usersByUsernameQuery(
+                "SELECT " +
+                    "login_id, passwd, true " +
+                    "FROM " +
+                    "users " +
+                    "WHERE " +
+                    "login_id = ?"
+            )
+            .groupAuthoritiesByUsername(
+                "SELECT " +
+                    "u.login_id, g.name, p.name " +
+                    "FROM " +
+                    "users u JOIN groups g ON u.group_id = g.id " +
+                    "LEFT JOIN group_permission gp ON g.id = gp.group_id " +
+                    "JOIN permissions p ON p.id = gp.permission_id " +
+                    "WHERE " +
+                    "u.login_id = ?"
+            )
+            .getUserDetailsService().setEnableAuthorities(false)
+        ;
     }
 
     @Override
@@ -116,6 +142,18 @@ public class WebSecurityConfigure extends WebSecurityConfigurerAdapter {
             response.getWriter().flush();
             response.getWriter().close();
         };
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(DataSource dataSource) {
+        JdbcDaoImpl jdbcDao = new JdbcDaoImpl();
+        jdbcDao.setDataSource(dataSource);
+        return jdbcDao;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean

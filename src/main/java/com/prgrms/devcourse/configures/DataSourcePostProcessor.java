@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataSourcePostProcessor implements BeanPostProcessor {
 
-  @Override
-  public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-    if (bean instanceof DataSource && !(bean instanceof Log4jdbcProxyDataSource)) {
-      return new Log4jdbcProxyDataSource((DataSource) bean);
-    } else {
-      return bean;
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (bean instanceof DataSource && !(bean instanceof Log4jdbcProxyDataSource)) {
+            return new Log4jdbcProxyDataSource((DataSource) bean);
+        } else {
+            return bean;
+        }
     }
-  }
 
 }
